@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SYNAPSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=McLaren&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <main class="page">
+    <section class="hero reveal">
+      <div class="hero-line"></div>
+      <h1>SYNAPSE</h1>
+      <p>A Hardware-Game Compatibility Reasoning System</p>
+    </section>
+
+    <section class="panel reveal" id="input-panel">
+      <div class="section-heading">
+        <span>System Configuration</span>
+        <button type="button" id="clear-inputs" class="ghost-button">Clear Inputs</button>
+      </div>
+
+      <div class="grid">
+        <label>CPU
+          <select id="cpu"></select>
+        </label>
+        <label>GPU
+          <select id="gpu"></select>
+        </label>
+        <label>Motherboard
+          <select id="motherboard"></select>
+        </label>
+        <label>RAM Capacity (GB)
+          <input id="ram-capacity" type="text" inputmode="numeric" placeholder="4 - 128">
+          <small class="error" id="ram-error"></small>
+        </label>
+        <label>RAM Generation
+          <select id="ram-gen">
+            <option value="">Default DDR4</option>
+            <option value="DDR3">DDR3</option>
+            <option value="DDR4">DDR4</option>
+            <option value="DDR5">DDR5</option>
+          </select>
+        </label>
+        <label>Drive Type
+          <select id="drive-type">
+            <option value="SSD">SSD</option>
+            <option value="HDD">HDD</option>
+          </select>
+        </label>
+        <label>Storage Free Space (GB)
+          <input id="storage-free" type="text" inputmode="decimal" placeholder="0 - 10000">
+          <small class="error" id="storage-error"></small>
+        </label>
+        <label>PSU Wattage (W)
+          <input id="psu-wattage" type="text" inputmode="numeric" placeholder="200 - 1600">
+          <small class="error" id="psu-error"></small>
+        </label>
+      </div>
+    </section>
+
+    <section class="choice-row reveal">
+      <button type="button" class="mode-button active" data-mode="forward">Find All Compatible Games</button>
+      <button type="button" class="mode-button" data-mode="backward">Already have a game? Test Compatibility</button>
+    </section>
+
+    <section class="game-panel reveal hidden" id="game-panel">
+      <label>Game Name
+        <input id="game-search" type="text" autocomplete="off" placeholder="Start typing a game name">
+      </label>
+      <div id="game-suggestions" class="suggestions"></div>
+      <small class="error" id="game-error"></small>
+    </section>
+
+    <section class="actions reveal">
+      <button type="button" id="run-button" class="primary-button">Run SYNAPSE</button>
+      <button type="button" id="reset-button" class="ghost-button hidden">Reset Page</button>
+      <div id="loader" class="loader hidden"></div>
+    </section>
+
+    <section id="popup" class="popup hidden">
+      <button type="button" id="close-popup">Close</button>
+      <p id="popup-message"></p>
+    </section>
+
+    <section id="output" class="output reveal hidden">
+      <h2>Output</h2>
+      <div id="stage0-output" class="output-card"></div>
+      <div id="final-output" class="output-card"></div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+@import url("https://fonts.googleapis.com/css2?family=McLaren&display=swap");
+
+:root {
+  --black: #03050a;
+  --black-2: #0a1020;
+  --blue: #164cff;
+  --blue-2: #071a56;
+  --red: #ff1e35;
+  --red-2: #5d0713;
+  --white: #ffffff;
+  --white-2: #dce6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "McLaren", system-ui, sans-serif;
+  color: var(--white);
+  background:
+    radial-gradient(circle at top left, var(--blue-2), transparent 32rem),
+    radial-gradient(circle at right, var(--red-2), transparent 28rem),
+    var(--black);
+}
+
+.page {
+  width: min(1120px, 92vw);
+  margin: 0 auto;
+  padding: 44px 0 80px;
+}
+
+.hero {
+  min-height: 42vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-line {
+  width: 90px;
+  height: 6px;
+  background: var(--red);
+  box-shadow: 0 0 24px var(--red);
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(4rem, 12vw, 9rem);
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 34px var(--blue);
+}
+
+h2,
+p {
+  margin-top: 0;
+}
+
+.panel,
+.game-panel,
+.output-card {
+  border: 1px solid var(--blue);
+  background: linear-gradient(135deg, rgba(10, 16, 32, 0.94), rgba(7, 26, 86, 0.62));
+  box-shadow: 0 0 30px rgba(22, 76, 255, 0.24);
+  border-radius: 24px;
+  padding: 26px;
+}
+
+.section-heading,
+.choice-row,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 28px 0;
+}
+
+.section-heading span {
+  font-size: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--white-2);
+}
+
+select,
+input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--blue);
+  color: var(--white);
+  background: var(--black);
+  font: inherit;
+  outline: none;
+}
+
+select:focus,
+input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 18px rgba(255, 30, 53, 0.45);
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--white);
+  border-radius: 999px;
+  padding: 14px 22px;
+  color: var(--white);
+  background: var(--black);
+  font: inherit;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.28);
+}
+
+.primary-button,
+.mode-button.active {
+  border-color: var(--red);
+  background: linear-gradient(135deg, var(--red-2), var(--blue-2));
+}
+
+.ghost-button {
+  border-color: var(--blue);
+}
+
+.choice-row {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mode-button {
+  min-width: 285px;
+}
+
+.suggestions {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--blue);
+  border-radius: 16px;
+  background: var(--black-2);
+}
+
+.suggestion img {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--red);
+}
+
+.error {
+  min-height: 18px;
+  color: var(--red);
+}
+
+.loader {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--blue);
+  border-top-color: var(--red);
+  animation: spin 900ms linear infinite;
+}
+
+.output {
+  margin-top: 36px;
+}
+
+.output-card {
+  margin: 18px 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.output-card pre {
+  white-space: pre-wrap;
+  font: inherit;
+  color: var(--white-2);
+}
+
+.ok-text {
+  color: var(--blue);
+}
+
+.bad-text {
+  color: var(--red);
+}
+
+.popup {
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  width: min(420px, 88vw);
+  background: var(--black);
+  border: 1px solid var(--red);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 0 30px rgba(255, 30, 53, 0.38);
+  z-index: 10;
+}
+
+.popup button {
+  float: right;
+  padding: 8px 12px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.reveal {
+  opacity: 0.34;
+  filter: blur(5px);
+  transform: translateY(26px);
+  transition: opacity 500ms ease, filter 500ms ease, transform 500ms ease;
+}
+
+.reveal.in-view {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading,
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mode-button {
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -19,7 +19,9 @@ python -m pip install -r requirements.txt
 
 ## Run
 
-Start the interactive system entry:
+### CLI Mode
+
+Start the original interactive CLI system entry:
 
 ```bash
 python main.py
@@ -30,6 +32,16 @@ Enter your hardware specs on the CLI. After hardware entry, you can optionally t
 - If you skip the game check, the system runs forward chaining across the full game set and prints the compatibility conclusions.
 - If you choose a game, the system shows backward chaining proofs for that game's minimum and recommended requirements, plus a focused final diagnostic.
 
+### Frontend Mode
+
+Start the Flask frontend:
+
+```bash
+python frontend_app.py
+```
+
+Then open the local URL shown in the terminal. The frontend collects the same inputs as the CLI and sends them to `main.py` through a Python subprocess. The CLI output is still generated completely; the frontend filters it for a cleaner display.
+
 See `rules_description.txt` for a plain-English explanation of every rule.
 
-No external rule-engine libraries are used. The only runtime dependency is `rich`.
+No external rule-engine libraries are used. Runtime dependencies are `rich` and `Flask`.
