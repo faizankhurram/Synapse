@@ -1,6 +1,6 @@
 # SYNAPSE
 
-SYNAPSE is a pure-Python multi-paradigm Knowledge Representation and Reasoning demo for PC hardware validation, game compatibility evaluation, and bottleneck inference.
+SYNAPSE is a pure-Python multi-paradigm Knowledge Representation and Reasoning system for PC hardware validation, game compatibility evaluation, and bottleneck inference.
 
 It implements:
 
@@ -19,38 +19,17 @@ python -m pip install -r requirements.txt
 
 ## Run
 
-Run every demonstration:
-
-```bash
-python main.py --all
-```
-
-Run a single scenario:
-
-```bash
-python main.py --config DummyUser_1
-python main.py --config DummyUser_2
-python main.py --config DummyUser_3
-```
-
-Or start the numeric selector:
+Start the interactive system entry:
 
 ```bash
 python main.py
 ```
 
-Enter a live system on the CLI (menu option 5, or flag):
+Enter your hardware specs on the CLI. After hardware entry, you can optionally test one game by ID/title, or press Enter / `s` to skip. Catalog lists are not printed in the prompt.
 
-```bash
-python main.py --interactive
-```
+- If you skip the game check, the system runs forward chaining across the full game set and prints the compatibility conclusions.
+- If you choose a game, the system shows backward chaining proofs for that game's minimum and recommended requirements, plus a focused final diagnostic.
 
-After hardware entry, you can optionally test one game by ID/title, or press Enter / `s` to skip. Catalog lists are not printed in the prompt.
-
-## Demo Scenarios
-
-- `DummyUser_1`: incomplete user input resolved through catalog lookup demons and defaults; balanced SSD rig; includes backward proofs for `PlayableRecommended(DummyUser_1, G06)` and `PlayableRecommended(DummyUser_1, G01)`.
-- `DummyUser_2`: CPU bottleneck with an HDD; shows `Severe_CPU_Bound` and SSD recommendation warnings for eligible games.
-- `DummyUser_3`: structural hardware faults; Stage 0 fails for socket, RAM generation, and power sufficiency, so Stage 1-3 inference halts.
+See `rules_description.txt` for a plain-English explanation of every rule.
 
 No external rule-engine libraries are used. The only runtime dependency is `rich`.

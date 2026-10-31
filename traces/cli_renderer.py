@@ -136,8 +136,6 @@ def _stage_of_rule(rule_name: str) -> int:
 
 def render_forward_trace(console: Console, result) -> None:
     section(console, "3. FORWARD CHAINING TRACE (step by step)")
-    console.print("How to read this: the engine starts from known hardware/game facts and")
-    console.print("keeps applying rules until no new conclusions appear.")
     console.print(f"Facts known at start -> end: {' -> '.join(str(c) for c in result.iteration_counts)}")
     console.print(f"Total new conclusions made: {len(result.fired)}")
     console.print()
@@ -232,18 +230,27 @@ def render_backward_proof(console: Console, proof, depth: int = 0) -> None:
         render_backward_proof(console, child, depth + 1)
 
 
+def _proof_test_heading(proof) -> str:
+    label = proof.label
+    if "PlayableRecommended" in label:
+        return "Recommended requirements test"
+    if "PlayableMinimum" in label:
+        return "Minimum requirements test"
+    return "Requirements test"
+
+
 def render_proofs(console: Console, proofs, section_title: str = "4. BACKWARD CHAINING PROOFS (step by step)") -> None:
     section(console, section_title)
-    console.print("How to read this: the engine starts from the question you asked and")
-    console.print("breaks it into smaller checks until each check is confirmed or fails.")
-    console.print()
     if not proofs:
         console.print("  (no game-specific proof was requested)")
         return
-    for i, proof in enumerate(proofs, start=1):
+    for proof in proofs:
         outcome = "PROVEN" if proof.status else "NOT PROVEN"
         color = "green" if proof.status else "red"
-        console.print(f"[bold]Question {i}[/bold]  final answer: [bold {color}]{outcome}[/bold {color}]")
+        console.print(
+            f"[bold]{_proof_test_heading(proof)}[/bold]  "
+            f"final answer: [bold {color}]{outcome}[/bold {color}]"
+        )
         render_backward_proof(console, proof, depth=1)
         console.print()
 

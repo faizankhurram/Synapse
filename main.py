@@ -1,7 +1,5 @@
 """SYNAPSE entry point."""
 
-import argparse
-
 from rich.console import Console
 
 from engine.backward_chainer import BackwardChainer
@@ -23,49 +21,6 @@ from traces.cli_renderer import (
     render_proofs,
     render_user_input,
 )
-
-
-DUMMY_USERS = {
-    "DummyUser_1": {
-        "description": "Incomplete user knowledge plus balanced mid-range rig on SSD",
-        "raw": {
-            "cpu": {"model_name": "AMD Ryzen 5 5600"},
-            "gpu": {"model_name": "NVIDIA GeForce RTX 3060 12GB"},
-            "motherboard": {"model_name": "MSI B550-A PRO"},
-            "ram": {"capacity_gb": 16},
-            "storage": {"drive_type": "SSD", "free_space_gb": 120.0},
-            "psu": {"wattage": 650},
-        },
-        "proofs": [
-            P("PlayableRecommended", "DummyUser_1", "G06"),
-            P("PlayableRecommended", "DummyUser_1", "G01"),
-        ],
-    },
-    "DummyUser_2": {
-        "description": "Bottlenecked rig with HDD streaming warning",
-        "raw": {
-            "cpu": {"model_name": "AMD Ryzen 3 1200"},
-            "gpu": {"model_name": "NVIDIA GeForce RTX 3070"},
-            "motherboard": {"model_name": "MSI B550-A PRO"},
-            "ram": {"capacity_gb": 16, "generation": "DDR4"},
-            "storage": {"drive_type": "HDD", "free_space_gb": 250.0},
-            "psu": {"wattage": 650},
-        },
-        "proofs": [P("PlayableMinimum", "DummyUser_2", "G08")],
-    },
-    "DummyUser_3": {
-        "description": "Physical hardware fault rig",
-        "raw": {
-            "cpu": {"model_name": "Intel Core i5-12400F"},
-            "gpu": {"model_name": "NVIDIA GeForce RTX 4090"},
-            "motherboard": {"model_name": "MSI B550-A PRO"},
-            "ram": {"capacity_gb": 16, "generation": "DDR5"},
-            "storage": {"drive_type": "SSD", "free_space_gb": 500.0},
-            "psu": {"wattage": 500},
-        },
-        "proofs": [],
-    },
-}
 
 
 def _ask(prompt: str, required: bool = True) -> str:
@@ -128,7 +83,8 @@ def _ask_catalog_model(prompt: str, catalog: dict, kind: str) -> str:
 
 def collect_interactive_raw() -> dict:
     print()
-    print("Interactive system entry")
+    print("-------------------------------- SYNPASE --------------------------------")
+    print("Please enter your system configurations below.")
     print("Leave optional fields blank to let catalog lookup / defaults fill them.")
     print()
 
@@ -271,11 +227,6 @@ def run_pipeline(
     )
 
 
-def run_demo(config_id: str, console: Console) -> None:
-    entry = DUMMY_USERS[config_id]
-    run_pipeline(config_id, entry["description"], entry["raw"], entry["proofs"], console)
-
-
 def run_interactive(console: Console) -> None:
     raw = collect_interactive_raw()
     game_id = ask_optional_game()
@@ -295,52 +246,10 @@ def run_interactive(console: Console) -> None:
     )
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="SYNAPSE multi-paradigm KRR expert system demo")
-    parser.add_argument("--all", action="store_true", help="Run all dummy user configurations")
-    parser.add_argument("--config", choices=sorted(DUMMY_USERS), help="Run one dummy user configuration")
-    parser.add_argument("--interactive", action="store_true", help="Enter a live system configuration on the CLI")
-    return parser.parse_args()
-
-
-def select_mode(args: argparse.Namespace):
-    if args.interactive:
-        return ("interactive", None)
-    if args.all:
-        return ("demos", list(DUMMY_USERS))
-    if args.config:
-        return ("demos", [args.config])
-
-    print("SYNAPSE demo selector")
-    print("1. DummyUser_1 - incomplete balanced SSD rig")
-    print("2. DummyUser_2 - CPU bottleneck HDD rig")
-    print("3. DummyUser_3 - physical fault rig")
-    print("4. All demos")
-    print("5. Enter my own system specs (interactive)")
-    choice = input("Select 1/2/3/4/5: ").strip()
-    if choice == "5":
-        return ("interactive", None)
-    return (
-        "demos",
-        {
-            "1": ["DummyUser_1"],
-            "2": ["DummyUser_2"],
-            "3": ["DummyUser_3"],
-            "4": list(DUMMY_USERS),
-        }.get(choice, ["DummyUser_1"]),
-    )
-
-
 def main() -> None:
     console = Console()
-    mode, configs = select_mode(parse_args())
-    if mode == "interactive":
-        run_interactive(console)
-        console.print()
-        return
-    for config_id in configs:
-        run_demo(config_id, console)
-        console.print()
+    run_interactive(console)
+    console.print()
 
 
 if __name__ == "__main__":
