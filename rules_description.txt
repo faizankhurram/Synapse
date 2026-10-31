@@ -1,0 +1,111 @@
+SYNAPSE Rule Guide (simple English)
+===================================
+
+This file explains every rule the system uses, from the first hardware safety
+checks to the final bottleneck warnings. You do not need coding knowledge to
+follow it.
+
+
+STAGE 0 - Physical hardware safety checks
+-----------------------------------------
+These run first. If any fail, the PC parts do not fit together safely, so the
+system stops and does not judge games.
+
+Rule 0.1 SocketCompatible
+  Checks that the CPU socket matches the motherboard socket.
+  Example meaning: an AM4 CPU must sit on an AM4 board.
+
+Rule 0.2 RAMGenCompatible
+  Checks that the RAM type matches what the motherboard supports.
+  Example meaning: DDR4 RAM needs a DDR4 board.
+
+Rule 0.3 PowerSufficient
+  Checks that the power supply is strong enough for the CPU and GPU, with a
+  safety margin.
+  Simple idea: PSU watts must cover CPU + GPU + about 100W extras, then add 15%.
+
+Rule 0.4 StorageValid
+  Checks that free storage space is greater than zero.
+  If there is no free space, games cannot be installed or run.
+
+
+STAGE 1 - Part-by-part game requirement checks
+----------------------------------------------
+For each game, the system compares your PC against minimum and recommended
+needs, one part at a time.
+
+Rule 1.1 CPUMeetsTier
+  Your CPU performance tier must be at least as high as the game asks for.
+
+Rule 1.2 GPUMeetsTier
+  Your GPU performance tier must be at least as high as the game asks for.
+
+Rule 1.3 VRAMMeetsCapacity
+  Your graphics card memory (VRAM) must be large enough for the game.
+
+Rule 1.4 RAMMeetsCapacity
+  Your system memory (RAM) must be large enough for the game.
+
+Rule 1.5 StorageMeetsCapacity
+  You must have enough free disk space for the game.
+
+Rule 1.6a StorageMeetsMedium_HDD
+  If the game allows an HDD, this check passes for that profile.
+
+Rule 1.6b StorageMeetsMedium_SSD
+  If the game wants an SSD, your drive must actually be an SSD.
+
+Rule 1.7 DirectXMeetsAPI
+  Your GPU DirectX version must be high enough for the game.
+
+
+STAGE 2 - Final playability decisions
+-------------------------------------
+These rules combine the Stage 1 checks into a simple yes/no answer.
+
+Rule 2.1 PlayableMinimum
+  The game is playable at minimum settings only if ALL minimum Stage 1 checks
+  pass (CPU, GPU, VRAM, RAM, storage space, storage type, and DirectX).
+
+Rule 2.2 PlayableRecommended
+  The game is playable at recommended settings if it already passes minimum,
+  AND all recommended Stage 1 checks also pass.
+
+Unplayable (closed-world result)
+  If PlayableMinimum cannot be proven, the game is treated as unplayable.
+  The system also records which Stage 1 checks failed.
+
+
+STAGE 3 - Balance, bottlenecks, and warnings
+--------------------------------------------
+These rules look at how well the PC parts work together, and warn about
+upgrade advice.
+
+Rule 3.1 Severe_CPU_Bound
+  If the GPU is much stronger than the CPU (GPU tier minus CPU tier is 3 or
+  more), the CPU is likely holding performance back.
+
+Rule 3.2 Severe_GPU_Bound
+  If the CPU is much stronger than the GPU (CPU tier minus GPU tier is 3 or
+  more), the GPU is likely holding performance back.
+
+Rule 3.3 Well_Balanced
+  If CPU and GPU tiers differ by at most 1 level, the system is well balanced.
+
+Rule 3.4 SSD_Recommended_Warning
+  If a game is playable on your PC at minimum settings, the recommended
+  profile wants an SSD, but you only have an HDD, the system warns that an
+  SSD is recommended for a better experience.
+
+
+How forward and backward chaining use these rules
+-------------------------------------------------
+Forward chaining (data-driven):
+  Starts from known facts about your PC and the games, then fires matching
+  rules until no new facts can be added. Good for scanning all games and
+  finding bottlenecks.
+
+Backward chaining (goal-driven):
+  Starts from one question, such as "Is this game recommended on my PC?",
+  then works backwards through the rules that would prove that answer.
+  Good for explaining one game decision step by step.
