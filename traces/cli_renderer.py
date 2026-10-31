@@ -71,50 +71,179 @@ def render_pre_checks(console: Console, results) -> bool:
     return all_ok
 
 
-def _fact_str(fact) -> str:
-    name, args = fact
-    return f"{name}{args}"
+def _game_title(game_id: str) -> str:
+    data = GAMES.get(game_id)
+    return data["title_name"] if data else game_id
+
+
+def _profile_word(profile: str) -> str:
+    return "minimum" if profile == "Min" else "recommended"
+
+
+RULE_PLAIN = {
+    "Rule 1.1 CPUMeetsTier": "CPU power check",
+    "Rule 1.2 GPUMeetsTier": "GPU power check",
+    "Rule 1.3 VRAMMeetsCapacity": "GPU memory (VRAM) check",
+    "Rule 1.4 RAMMeetsCapacity": "System RAM check",
+    "Rule 1.5 StorageMeetsCapacity": "Free storage space check",
+    "Rule 1.6a StorageMeetsMedium_HDD": "Storage type check (HDD allowed)",
+    "Rule 1.6b StorageMeetsMedium_SSD": "Storage type check (SSD required)",
+    "Rule 1.7 DirectXMeetsAPI": "DirectX version check",
+    "Rule 2.1 PlayableMinimum": "Can run at minimum settings",
+    "Rule 2.2 PlayableRecommended": "Can run at recommended settings",
+    "Rule 3.1 Severe_CPU_Bound": "CPU is holding the GPU back",
+    "Rule 3.2 Severe_GPU_Bound": "GPU is holding the CPU back",
+    "Rule 3.3 Well_Balanced": "CPU and GPU are well matched",
+    "Rule 3.4 SSD_Recommended_Warning": "SSD upgrade recommended",
+}
+
+
+def _plain_forward_line(event) -> str:
+    name, args = event.derived_fact
+    if name in {"CPUMeetsTier", "GPUMeetsTier", "VRAMMeetsCapacity", "RAMMeetsCapacity", "StorageMeetsCapacity", "StorageMeetsMedium", "DirectXMeetsAPI"}:
+        label = {
+            "CPUMeetsTier": "CPU",
+            "GPUMeetsTier": "GPU",
+            "VRAMMeetsCapacity": "VRAM",
+            "RAMMeetsCapacity": "RAM",
+            "StorageMeetsCapacity": "storage space",
+            "StorageMeetsMedium": "storage type",
+            "DirectXMeetsAPI": "DirectX",
+        }[name]
+        system_id, game_id, profile = args
+        return f"{label} is enough for {_profile_word(profile)} settings of {_game_title(game_id)} ({game_id})"
+    if name == "PlayableMinimum":
+        return f"{_game_title(args[1])} ({args[1]}) is playable at minimum settings"
+    if name == "PlayableRecommended":
+        return f"{_game_title(args[1])} ({args[1]}) is playable at recommended settings"
+    if name == "Bottleneck":
+        kind = "CPU bottleneck" if args[1] == "Severe_CPU_Bound" else "GPU bottleneck"
+        return f"System shows a severe {kind}"
+    if name == "SystemBalance":
+        return "System CPU and GPU tiers are well balanced"
+    if name == "Warning":
+        return f"Warning for {_game_title(args[1])} ({args[1]}): an SSD is recommended"
+    return f"Derived: {name} {args}"
+
+
+def _stage_of_rule(rule_name: str) -> int:
+    if "Rule 3." in rule_name:
+        return 3
+    if "Rule 2." in rule_name:
+        return 2
+    return 1
 
 
 def render_forward_trace(console: Console, result) -> None:
     section(console, "3. FORWARD CHAINING TRACE (step by step)")
-    counts = " -> ".join(str(c) for c in result.iteration_counts)
-    console.print(f"Working memory size by iteration: {counts}")
-    console.print(f"Total fired rule applications  : {len(result.fired)}")
+    console.print("How to read this: the engine starts from known hardware/game facts and")
+    console.print("keeps applying rules until no new conclusions appear.")
+    console.print(f"Facts known at start -> end: {' -> '.join(str(c) for c in result.iteration_counts)}")
+    console.print(f"Total new conclusions made: {len(result.fired)}")
     console.print()
 
     by_rule: dict[str, list] = {}
     for event in result.fired:
         by_rule.setdefault(event.rule_name, []).append(event)
 
-    for rule_name, events in by_rule.items():
-        console.print(f"[bold]{rule_name}[/bold]  ({len(events)} derivation(s))")
-        show = events if len(events) <= 8 else events[:5]
-        for event in show:
-            console.print(f"  iter {event.iteration}: {_fact_str(event.derived_fact)}")
-            console.print(f"           theta = {event.theta}")
-        if len(events) > 8:
-            console.print(f"  ... and {len(events) - 5} more for this rule")
+    for stage, stage_title in (
+        (1, "Stage 1 - Part-by-part checks against each game"),
+        (2, "Stage 2 - Overall playability decisions"),
+        (3, "Stage 3 - Bottleneck and warning diagnostics"),
+    ):
+        stage_rules = [(name, events) for name, events in by_rule.items() if _stage_of_rule(name) == stage]
+        if not stage_rules:
+            continue
+        console.print(f"[bold]{stage_title}[/bold]")
+        for rule_name, events in stage_rules:
+            plain = RULE_PLAIN.get(rule_name, rule_name)
+            console.print(f"  {plain}  [{len(events)} conclusion(s)]")
+            show = events if len(events) <= 6 else events[:4]
+            for event in show:
+                console.print(f"    - {_plain_forward_line(event)}")
+            if len(events) > 6:
+                console.print(f"    - ... and {len(events) - 4} more similar conclusions")
         console.print()
+
+
+def _humanize_proof_label(label: str) -> str:
+    text = label
+    # Longer phrases first so rule titles are not partially rewritten.
+    replacements = [
+        ("Apply Rule 1.1 CPUMeetsTier", "Using CPU power rule"),
+        ("Apply Rule 1.2 GPUMeetsTier", "Using GPU power rule"),
+        ("Apply Rule 1.3 VRAMMeetsCapacity", "Using VRAM capacity rule"),
+        ("Apply Rule 1.4 RAMMeetsCapacity", "Using RAM capacity rule"),
+        ("Apply Rule 1.5 StorageMeetsCapacity", "Using storage space rule"),
+        ("Apply Rule 1.6a StorageMeetsMedium_HDD", "Using HDD storage-type rule"),
+        ("Apply Rule 1.6b StorageMeetsMedium_SSD", "Using SSD storage-type rule"),
+        ("Apply Rule 1.7 DirectXMeetsAPI", "Using DirectX rule"),
+        ("Apply Rule 2.1 PlayableMinimum", "Using minimum playability rule"),
+        ("Apply Rule 2.2 PlayableRecommended", "Using recommended playability rule"),
+        ("Apply Rule 3.1 Severe_CPU_Bound", "Using CPU bottleneck rule"),
+        ("Apply Rule 3.2 Severe_GPU_Bound", "Using GPU bottleneck rule"),
+        ("Apply Rule 3.3 Well_Balanced", "Using balance rule"),
+        ("Apply Rule 3.4 SSD_Recommended_Warning", "Using SSD warning rule"),
+        ("PlayableRecommended", "Recommended playability"),
+        ("PlayableMinimum", "Minimum playability"),
+        ("CPUMeetsTier", "CPU tier check"),
+        ("GPUMeetsTier", "GPU tier check"),
+        ("VRAMMeetsCapacity", "VRAM capacity check"),
+        ("RAMMeetsCapacity", "RAM capacity check"),
+        ("StorageMeetsCapacity", "Storage space check"),
+        ("StorageMeetsMedium", "Storage type check"),
+        ("DirectXMeetsAPI", "DirectX check"),
+        ("SystemCPUTier", "System CPU tier"),
+        ("SystemGPUTier", "System GPU tier"),
+        ("SystemVRAM", "System VRAM"),
+        ("SystemRAM", "System RAM"),
+        ("SystemStorageFree", "Free storage"),
+        ("SystemDriveType", "Drive type"),
+        ("SystemDX", "System DirectX"),
+        ("SystemConfig", "System configuration"),
+        ("GameReqCPUTier", "Game required CPU tier"),
+        ("GameReqGPUTier", "Game required GPU tier"),
+        ("GameReqVRAM", "Game required VRAM"),
+        ("GameReqRAM", "Game required RAM"),
+        ("GameReqStorage", "Game required storage"),
+        ("GameReqMedium", "Game required storage type"),
+        ("GameReqDX", "Game required DirectX"),
+        (" -> PROVEN", " -> YES, proven"),
+        (" -> DISPROVEN", " -> NO, not proven"),
+        ("Fact ", "Known fact: "),
+        ("Goal ", "Need to prove: "),
+        ("Compare ", "Number check: "),
+        ("No proof for ", "Could not prove: "),
+        ("Cycle blocked at ", "Stopped repeating check for: "),
+    ]
+    for old, new in replacements:
+        text = text.replace(old, new)
+    text = text.replace("('", " for ").replace("', '", ", ").replace("')", "")
+    text = text.replace("(", " ").replace(")", "").replace("'", "")
+    return " ".join(text.split())
 
 
 def render_backward_proof(console: Console, proof, depth: int = 0) -> None:
     indent = "  " * depth
     style = "green" if proof.status else "red"
-    console.print(f"{indent}[{style}]{escape(proof.label)}[/{style}]")
-    if proof.theta and proof.theta != "{}":
-        console.print(f"{indent}  theta = {proof.theta}")
+    mark = "OK" if proof.status else "X"
+    console.print(f"{indent}[{style}][{mark}] {_humanize_proof_label(proof.label)}[/{style}]")
     for child in proof.children:
         render_backward_proof(console, child, depth + 1)
 
 
 def render_proofs(console: Console, proofs, section_title: str = "4. BACKWARD CHAINING PROOFS (step by step)") -> None:
     section(console, section_title)
+    console.print("How to read this: the engine starts from the question you asked and")
+    console.print("breaks it into smaller checks until each check is confirmed or fails.")
+    console.print()
     if not proofs:
-        console.print("  (no backward goals requested for this config)")
+        console.print("  (no game-specific proof was requested)")
         return
     for i, proof in enumerate(proofs, start=1):
-        console.print(f"[bold]Goal {i}[/bold]")
+        outcome = "PROVEN" if proof.status else "NOT PROVEN"
+        color = "green" if proof.status else "red"
+        console.print(f"[bold]Question {i}[/bold]  final answer: [bold {color}]{outcome}[/bold {color}]")
         render_backward_proof(console, proof, depth=1)
         console.print()
 
