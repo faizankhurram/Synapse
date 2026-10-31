@@ -155,20 +155,14 @@ button:hover {
 }
 
 .suggestion {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
   border: 1px solid var(--blue);
   border-radius: 16px;
   background: var(--black-2);
-}
-
-.suggestion img {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--red);
+  color: var(--white);
 }
 
 .error {
@@ -191,7 +185,6 @@ button:hover {
 
 .output-card {
   margin: 18px 0;
-  white-space: pre-wrap;
   line-height: 1.6;
 }
 
@@ -207,6 +200,196 @@ button:hover {
 
 .bad-text {
   color: var(--red);
+}
+
+.result-section {
+  margin: 18px 0;
+  padding: 20px;
+  border: 1px solid var(--blue);
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--black), var(--blue-2));
+  box-shadow: 0 0 22px rgba(22, 76, 255, 0.2);
+}
+
+.result-section h3 {
+  color: var(--white);
+  margin: 0 0 14px;
+}
+
+.result-section p,
+.result-section li,
+.result-section code {
+  color: var(--white-2);
+}
+
+.result-section code {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  background: var(--black);
+}
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.kv-row {
+  padding: 14px;
+  border: 1px solid var(--blue);
+  border-radius: 14px;
+  background: var(--black);
+}
+
+.kv-row span {
+  display: block;
+  color: var(--white-2);
+  font-size: 0.88rem;
+}
+
+.kv-row strong {
+  display: block;
+  color: var(--white);
+  margin-top: 6px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--blue);
+  border-radius: 14px;
+}
+
+.verdict-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--white);
+  background: var(--black);
+}
+
+.verdict-table th,
+.verdict-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--blue-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.verdict-table th {
+  color: var(--white);
+  background: var(--blue-2);
+}
+
+.verdict-table th:nth-child(1),
+.verdict-table td:nth-child(1) {
+  width: 42%;
+}
+
+.verdict-table th:nth-child(2),
+.verdict-table td:nth-child(2) {
+  width: 22%;
+}
+
+.verdict-table th:nth-child(3),
+.verdict-table td:nth-child(3) {
+  width: 36%;
+}
+
+.verdict {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--white);
+  color: var(--white);
+  background: var(--black);
+}
+
+.verdict-rec {
+  border-color: var(--blue);
+  box-shadow: 0 0 14px rgba(22, 76, 255, 0.28);
+}
+
+.verdict-min {
+  border-color: var(--white);
+  color: var(--white-2);
+}
+
+.verdict-bad {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 14px rgba(255, 30, 53, 0.28);
+}
+
+.summary-card {
+  border-color: var(--red);
+}
+
+.focused-game {
+  border-color: var(--red);
+}
+
+.outlook-card {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--blue);
+  border-radius: 14px;
+  background: var(--black);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.outlook-card h4 {
+  margin: 0 0 10px;
+  color: var(--white);
+}
+
+.outlook-card p {
+  margin: 0;
+  color: var(--white-2);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.fail-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.fail-card {
+  padding: 16px;
+  border: 1px solid var(--red);
+  border-radius: 14px;
+  background: var(--black);
+}
+
+.fail-card h4 {
+  margin: 0 0 8px;
+  color: var(--white);
+}
+
+.fail-card p {
+  margin: 0 0 10px;
+  color: var(--white-2);
+}
+
+.stage0-fail {
+  border-color: var(--red);
+}
+
+.reset-row {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 8px;
+}
+
+.game-panel input {
+  margin-bottom: 8px;
 }
 
 .popup {
@@ -229,19 +412,6 @@ button:hover {
 
 .hidden {
   display: none !important;
-}
-
-.reveal {
-  opacity: 0.34;
-  filter: blur(5px);
-  transform: translateY(26px);
-  transition: opacity 500ms ease, filter 500ms ease, transform 500ms ease;
-}
-
-.reveal.in-view {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0);
 }
 
 @keyframes spin {

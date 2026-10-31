@@ -54,11 +54,23 @@ class FrameInstance:
                 self.values[slot_name] = slot.default_value
                 self.resolution_log.append({"slot": slot_name, "method": ":default", "source": "slot default", "value": slot.default_value})
         value = self.values.get(slot_name)
+        value = self._coerce(slot_name, value)
+        self.values[slot_name] = value
         self._validate(slot_name, value)
         return value
 
     def materialize(self) -> dict[str, Any]:
         return {name: self.get(name) for name in self.frame_class.all_slots()}
+
+    def _coerce(self, slot_name: str, value: Any) -> Any:
+        if value is None:
+            return None
+        slot = self.frame_class.all_slots()[slot_name]
+        if slot.data_type is float and isinstance(value, int):
+            return float(value)
+        if slot.data_type is int and isinstance(value, float) and value.is_integer():
+            return int(value)
+        return value
 
     def _validate(self, slot_name: str, value: Any) -> None:
         slot = self.frame_class.all_slots()[slot_name]

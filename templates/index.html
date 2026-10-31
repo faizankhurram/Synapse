@@ -11,13 +11,13 @@
 </head>
 <body>
   <main class="page">
-    <section class="hero reveal">
+    <section class="hero">
       <div class="hero-line"></div>
       <h1>SYNAPSE</h1>
       <p>A Hardware-Game Compatibility Reasoning System</p>
     </section>
 
-    <section class="panel reveal" id="input-panel">
+    <section class="panel" id="input-panel">
       <div class="section-heading">
         <span>System Configuration</span>
         <button type="button" id="clear-inputs" class="ghost-button">Clear Inputs</button>
@@ -62,22 +62,19 @@
       </div>
     </section>
 
-    <section class="choice-row reveal">
+    <section class="choice-row">
       <button type="button" class="mode-button active" data-mode="forward">Find All Compatible Games</button>
       <button type="button" class="mode-button" data-mode="backward">Already have a game? Test Compatibility</button>
     </section>
 
-    <section class="game-panel reveal hidden" id="game-panel">
-      <label>Game Name
-        <input id="game-search" type="text" autocomplete="off" placeholder="Start typing a game name">
-      </label>
+    <section class="game-panel hidden" id="game-panel">
+      <input id="game-search" type="text" autocomplete="off" placeholder="Enter game name">
       <div id="game-suggestions" class="suggestions"></div>
       <small class="error" id="game-error"></small>
     </section>
 
-    <section class="actions reveal">
+    <section class="actions">
       <button type="button" id="run-button" class="primary-button">Run SYNAPSE</button>
-      <button type="button" id="reset-button" class="ghost-button hidden">Reset Page</button>
       <div id="loader" class="loader hidden"></div>
     </section>
 
@@ -86,10 +83,13 @@
       <p id="popup-message"></p>
     </section>
 
-    <section id="output" class="output reveal hidden">
+    <section id="output" class="output hidden">
       <h2>Output</h2>
       <div id="stage0-output" class="output-card"></div>
       <div id="final-output" class="output-card"></div>
+      <div class="reset-row hidden" id="reset-row">
+        <button type="button" id="reset-button" class="ghost-button">Reset Page</button>
+      </div>
     </section>
   </main>
   <script src="{{ url_for('static', filename='app.js') }}"></script>

@@ -14,17 +14,6 @@ function optionList(select, values) {
   });
 }
 
-function gameIcon(title, initials) {
-  const safeTitle = title.replace(/[&<>]/g, "");
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>
-    <rect width='64' height='64' rx='14' fill='#03050a'/>
-    <rect x='4' y='4' width='56' height='56' rx='12' fill='#071a56' stroke='#ff1e35' stroke-width='3'/>
-    <text x='32' y='39' text-anchor='middle' font-family='Arial' font-size='18' fill='#ffffff'>${initials}</text>
-    <title>${safeTitle}</title>
-  </svg>`;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-}
-
 function showPopup(message) {
   $("popup-message").textContent = message;
   $("popup").classList.remove("hidden");
@@ -110,7 +99,7 @@ function renderSuggestions() {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "suggestion";
-      row.innerHTML = `<img alt="${game.title} icon" src="${gameIcon(game.title, game.icon)}"><span>${game.title}</span>`;
+      row.textContent = game.title;
       row.addEventListener("click", () => {
         selectedGame = game;
         $("game-search").value = game.title;
@@ -134,18 +123,6 @@ function setMode(nextMode) {
   }
 }
 
-function stage0Html(rows) {
-  if (!rows.length) return "<h3>Stage 0 Pre-checks</h3><p>No Stage 0 output was captured.</p>";
-  const items = rows.map((row) => {
-    const statusClass = row.status === "PASS" ? "ok-text" : "bad-text";
-    const outcome = row.status === "PASS" ? "Passed" : "Failed";
-    return `<li><strong>${escapeHtml(row.rule)}</strong><br>${escapeHtml(row.explanation)}<br>
-      Check performed: <code>${escapeHtml(row.check)}</code><br>
-      Result: <span class="${statusClass}">${outcome}</span></li>`;
-  }).join("");
-  return `<h3>Stage 0 Pre-checks</h3><ul>${items}</ul>`;
-}
-
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -155,9 +132,173 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function prettyLabel(value) {
+  return String(value || "None").replaceAll("_", " ");
+}
+
+function stage0Html(rows) {
+  const failedRows = rows.filter((row) => row.status !== "PASS");
+  if (!failedRows.length) return "";
+  const items = failedRows.map((row) => {
+    const title = row.rule.replace(/^Rule\s+\d+\.\d+\s+/, "");
+    return `<div class="fail-card">
+      <h4>${escapeHtml(prettyLabel(title))}</h4>
+      <p>${escapeHtml(row.explanation)}</p>
+      <span class="bad-text">Failed</span>
+    </div>`;
+  }).join("");
+  return `<div class="result-section stage0-fail">
+    <h3>Stage 0 Compatibility Failure</h3>
+    <p>Your hardware configuration is not physically valid. Fix the issues below before running game compatibility checks.</p>
+    <div class="fail-grid">${items}</div>
+  </div>`;
+}
+
+function verdictClass(verdict) {
+  if (verdict === "RECOMMENDED") return "verdict-rec";
+  if (verdict === "MINIMUM ONLY") return "verdict-min";
+  return "verdict-bad";
+}
+
+function parseDiagnostics(lines) {
+  const start = lines.findIndex((line) => line.trim() === "System diagnostics");
+  if (start === -1) return {};
+  const data = {};
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (!line || line.includes("Requested game") || line === "Game compatibility verdicts") break;
+    if (!line.includes(":")) continue;
+    const [key, ...rest] = line.split(":");
+    data[key.trim()] = prettyLabel(rest.join(":").trim() || "None");
+  }
+  return data;
+}
+
+function systemDiagnosticsHtml(lines) {
+  const data = parseDiagnostics(lines);
+  if (!Object.keys(data).length) return "";
+  const rows = Object.entries(data).map(([key, value]) => (
+    `<div class="kv-row"><span>${escapeHtml(key)}</span><strong>${escapeHtml(value)}</strong></div>`
+  )).join("");
+  return `<div class="result-section"><h3>System Diagnostics</h3><div class="kv-grid">${rows}</div></div>`;
+}
+
+function splitTitleNotes(rest) {
+  const sorted = [...catalog.games].sort((a, b) => b.title.length - a.title.length);
+  for (const game of sorted) {
+    if (rest === game.title) return { title: game.title, notes: "None" };
+    if (rest.startsWith(`${game.title} `)) {
+      return { title: game.title, notes: rest.slice(game.title.length).trim() || "None" };
+    }
+  }
+  const parts = rest.split(/\s{2,}/);
+  if (parts.length >= 2) return { title: parts[0].trim(), notes: parts.slice(1).join(" ").trim() || "None" };
+  return { title: rest, notes: "None" };
+}
+
+function forwardFinalHtml(text) {
+  const lines = text.split("\n");
+  const diagnostics = systemDiagnosticsHtml(lines);
+  const gameStart = lines.findIndex((line) => line.trim() === "Game compatibility verdicts");
+  const summaryLine = lines.find((line) => line.trim().startsWith("Summary:")) || "";
+  const rows = [];
+  if (gameStart !== -1) {
+    for (let i = gameStart + 3; i < lines.length; i += 1) {
+      const line = lines[i].trim();
+      if (!line || line.startsWith("Summary:")) continue;
+      const match = line.match(/^(G\d+)\s+(RECOMMENDED|MINIMUM ONLY|UNPLAYABLE)\s+(.+)$/);
+      if (!match) continue;
+      const { title, notes } = splitTitleNotes(match[3].trim());
+      rows.push(`<tr>
+        <td>${escapeHtml(title)}</td>
+        <td><span class="verdict ${verdictClass(match[2])}">${escapeHtml(match[2])}</span></td>
+        <td>${escapeHtml(notes)}</td>
+      </tr>`);
+    }
+  }
+  return `${diagnostics}
+    <div class="result-section">
+      <h3>Game Compatibility Verdicts</h3>
+      <div class="table-wrap">
+        <table class="verdict-table">
+          <thead><tr><th>Game Name</th><th>Verdict</th><th>Notes</th></tr></thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-section summary-card"><h3>Summary</h3><p>${escapeHtml(summaryLine.replace(/^Summary:\s*/, "").trim())}</p></div>`;
+}
+
+function gameNameOnly(rawLabel) {
+  if (selectedGame && selectedGame.title) return selectedGame.title;
+  const label = String(rawLabel || "").trim();
+  const withoutId = label.replace(/^G\d+\s*[-–:]\s*/i, "").trim();
+  const match = catalog.games.find((game) => (
+    withoutId === game.title
+    || label === game.title
+    || label.endsWith(` - ${game.title}`)
+    || label.includes(game.title)
+  ));
+  return match ? match.title : (withoutId || label || "Selected game");
+}
+
+function backwardFinalHtml(text) {
+  const lines = text.split("\n");
+  const diagnostics = systemDiagnosticsHtml(lines);
+  const requestedIndex = lines.findIndex((line) => line.trim().startsWith("Requested game evaluation"));
+  const requestedRaw = requestedIndex >= 0
+    ? lines[requestedIndex].trim().replace(/^Requested game evaluation:\s*/, "")
+    : "Selected game";
+  const requested = gameNameOnly(requestedRaw);
+  const details = {};
+  let outlook = "";
+  let capturingOutlook = false;
+  for (let i = requestedIndex + 1; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (!line) {
+      capturingOutlook = false;
+      continue;
+    }
+    if (line.startsWith("Performance outlook:")) {
+      outlook = line.replace(/^Performance outlook:\s*/, "").trim();
+      capturingOutlook = true;
+      continue;
+    }
+    if (capturingOutlook && !line.includes(":")) {
+      outlook = `${outlook} ${line}`.trim();
+      continue;
+    }
+    capturingOutlook = false;
+    if (line.includes(":")) {
+      const [key, ...rest] = line.split(":");
+      details[key.trim()] = rest.join(":").trim() || "None";
+    }
+  }
+  const verdict = prettyLabel(details.Verdict || details.verdict || "Unknown");
+  const notes = prettyLabel(details.Notes || details.notes || "None");
+  const warnings = prettyLabel(details["Game warnings"] || "None");
+  return `${diagnostics}
+    <div class="result-section focused-game">
+      <h3>Requested Game Evaluation</h3>
+      <div class="kv-grid">
+        <div class="kv-row"><span>Game</span><strong>${escapeHtml(requested)}</strong></div>
+        <div class="kv-row"><span>Verdict</span><strong><span class="verdict ${verdictClass(verdict)}">${escapeHtml(verdict)}</span></strong></div>
+        <div class="kv-row"><span>Notes</span><strong>${escapeHtml(notes)}</strong></div>
+        <div class="kv-row"><span>Game Warnings</span><strong>${escapeHtml(warnings)}</strong></div>
+      </div>
+      ${outlook ? `<div class="outlook-card"><h4>Performance Outlook</h4><p>${escapeHtml(outlook)}</p></div>` : ""}
+    </div>`;
+}
+
 function finalHtml(text) {
   if (!text) return "";
-  return `<h3>Final Diagnostic</h3><pre>${escapeHtml(text)}</pre>`;
+  if (text.includes("Game compatibility verdicts")) return forwardFinalHtml(text);
+  if (text.includes("Requested game evaluation")) return backwardFinalHtml(text);
+  return "";
+}
+
+function showReset() {
+  $("reset-row").classList.remove("hidden");
 }
 
 async function runSynapse() {
@@ -169,6 +310,7 @@ async function runSynapse() {
   $("loader").classList.remove("hidden");
   $("run-button").disabled = true;
   $("output").classList.add("hidden");
+  $("reset-row").classList.add("hidden");
 
   try {
     const response = await fetch("/api/run", {
@@ -180,12 +322,21 @@ async function runSynapse() {
     if (!response.ok && data.error) {
       showPopup(data.error);
     }
-    $("stage0-output").innerHTML = stage0Html(data.stage0 || []);
-    $("final-output").innerHTML = data.precheck_passed
-      ? finalHtml(data.final_text)
-      : `<h3>Execution Stopped</h3><p>Stage 0 failed. The frontend flow cannot continue.</p>${finalHtml(data.final_text)}`;
+
+    const stage0 = stage0Html(data.stage0 || []);
+    $("stage0-output").innerHTML = stage0;
+    $("stage0-output").classList.toggle("hidden", !stage0);
+
+    if (data.precheck_passed) {
+      $("final-output").innerHTML = finalHtml(data.final_text);
+      $("final-output").classList.remove("hidden");
+    } else {
+      $("final-output").innerHTML = "";
+      $("final-output").classList.add("hidden");
+    }
+
     $("output").classList.remove("hidden");
-    $("reset-button").classList.remove("hidden");
+    showReset();
     $("output").scrollIntoView({ behavior: "smooth" });
   } catch (error) {
     showPopup(`Frontend error: ${error.message}`);
@@ -206,17 +357,7 @@ function clearInputs() {
   clearErrors();
 }
 
-function setupReveal() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      entry.target.classList.toggle("in-view", entry.isIntersecting);
-    });
-  }, { threshold: 0.28 });
-  document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-}
-
 async function init() {
-  setupReveal();
   const response = await fetch("/api/catalog");
   catalog = await response.json();
   optionList($("cpu"), catalog.cpus);
