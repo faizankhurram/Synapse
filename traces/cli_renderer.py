@@ -155,12 +155,11 @@ def render_forward_trace(console: Console, result) -> None:
         console.print(f"[bold]{stage_title}[/bold]")
         for rule_name, events in stage_rules:
             plain = RULE_PLAIN.get(rule_name, rule_name)
-            console.print(f"  {plain}  [{len(events)} conclusion(s)]")
-            show = events if len(events) <= 6 else events[:4]
-            for event in show:
+            parts = rule_name.split(maxsplit=2)
+            rule_number = f"{parts[0]} {parts[1]}" if len(parts) >= 2 else rule_name
+            console.print(f"  {rule_number} {plain}  [{len(events)} conclusion(s)]")
+            for event in events:
                 console.print(f"    - {_plain_forward_line(event)}")
-            if len(events) > 6:
-                console.print(f"    - ... and {len(events) - 4} more similar conclusions")
         console.print()
 
 

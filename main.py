@@ -83,7 +83,7 @@ def _ask_catalog_model(prompt: str, catalog: dict, kind: str) -> str:
 
 def collect_interactive_raw() -> dict:
     print()
-    print("-------------------------------- SYNPASE --------------------------------")
+    print("-------------------------------- SYNAPSE --------------------------------")
     print("Please enter your system configurations below.")
     print("Leave optional fields blank to let catalog lookup / defaults fill them.")
     print()
