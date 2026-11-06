@@ -297,8 +297,10 @@ def render_conclusions(console: Console, system_id: str, facts: set, limiting: d
     console.print()
 
     console.print("[bold]Game compatibility verdicts[/bold]")
-    console.print(f"  {'ID':<5} {'Verdict':<14} Title / Notes")
-    console.print(f"  {'-'*5} {'-'*14} {'-'*48}")
+    title_width = max(len(data["title_name"]) for data in GAMES.values())
+    title_width = max(title_width, len("Title"))
+    console.print(f"  {'ID':<5} {'Verdict':<14} {'Title':<{title_width}}  Notes")
+    console.print(f"  {'-'*5} {'-'*14} {'-'*title_width}  {'-'*24}")
 
     recommended = minimum = unplayable = 0
     for game_id, data in GAMES.items():
@@ -309,10 +311,10 @@ def render_conclusions(console: Console, system_id: str, facts: set, limiting: d
             minimum += 1
         else:
             unplayable += 1
-        line_notes = f"  {notes}" if notes else ""
+        notes_text = notes if notes else "None"
         console.print(
             f"  {game_id:<5} [bold {color}]{verdict:<14}[/bold {color}] "
-            f"{data['title_name']}{line_notes}"
+            f"{data['title_name']:<{title_width}}  {notes_text}"
         )
 
     console.print()
