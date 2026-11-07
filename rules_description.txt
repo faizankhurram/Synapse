@@ -1,4 +1,4 @@
-SYNAPSE Rule Guide (simple English)
+SYNAPSE Rule Guide
 ===================================
 
 This file explains every rule the system uses, from the first hardware safety
