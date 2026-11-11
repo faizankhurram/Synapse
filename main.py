@@ -19,6 +19,7 @@ from traces.cli_renderer import (
     render_header,
     render_pre_checks,
     render_proofs,
+    render_semantic_net,
     render_user_input,
 )
 
@@ -31,7 +32,7 @@ def _ask(prompt: str, required: bool = True) -> str:
         print("  This field is required.")
 
 
-def _ask_int_in_range(prompt: str, lo: int, hi: int) -> int:
+def _ask_int_in_range(prompt: str, lo: int, hi: int, multiple_of: int | None = None) -> int:
     while True:
         raw = _ask(prompt, required=True)
         try:
@@ -39,9 +40,13 @@ def _ask_int_in_range(prompt: str, lo: int, hi: int) -> int:
         except ValueError:
             print(f"  Invalid input. Enter an integer between {lo} and {hi}.")
             continue
-        if lo <= value <= hi:
-            return value
-        print(f"  Out of range. Enter an integer between {lo} and {hi}.")
+        if not lo <= value <= hi:
+            print(f"  Out of range. Enter an integer between {lo} and {hi}.")
+            continue
+        if multiple_of is not None and value % multiple_of != 0:
+            print(f"  Enter a multiple of {multiple_of} between {lo} and {hi}.")
+            continue
+        return value
 
 
 def _ask_float_in_range(prompt: str, lo: float, hi: float) -> float:
@@ -91,7 +96,7 @@ def collect_interactive_raw() -> dict:
     cpu_model = _ask_catalog_model("CPU model name: ", CPUS, "CPU")
     gpu_model = _ask_catalog_model("GPU model name: ", GPUS, "GPU")
     mobo_model = _ask_catalog_model("Motherboard model name: ", MOTHERBOARDS, "motherboard")
-    ram_capacity = _ask_int_in_range("RAM capacity (GB): ", 4, 128)
+    ram_capacity = _ask_int_in_range("RAM capacity GB (multiples of 4): ", 4, 128, multiple_of=4)
     ram_gen = _ask_optional_choice(
         "RAM generation (DDR3/DDR4/DDR5, blank for default DDR4): ",
         {"DDR3", "DDR4", "DDR5"},
@@ -164,7 +169,7 @@ def ask_optional_game() -> str | None:
 
 
 def _build_kr_artifacts(system, facts: set):
-    """Keep frames / semantic net / DL artifacts alive in the backend (not printed)."""
+    """Build frames / semantic net / DL artifacts used by the KR layer."""
     games = instantiate_games()
     resolution_log = collect_resolution_log(system)
     diagnostics = [
@@ -200,15 +205,15 @@ def run_pipeline(
     pre_results = evaluate_pre_checks(system)
     ok = render_pre_checks(console, pre_results)
     if not ok:
-        # Structural KR still computed for the knowledge layer; omitted from CLI output.
-        _build_kr_artifacts(system, set())
+        artifacts = _build_kr_artifacts(system, set())
+        render_semantic_net(console, artifacts["semantic_net"], artifacts["dl_result"])
         render_halt_conclusion(console, pre_results, raw, system)
         return
 
     # Forward closure still runs for diagnostics; focused game mode does not print it.
     forward = forward_chain(system)
-    # Frames, semantic network, and DL consistency remain part of the engine path.
-    _build_kr_artifacts(system, forward.facts)
+    artifacts = _build_kr_artifacts(system, forward.facts)
+    render_semantic_net(console, artifacts["semantic_net"], artifacts["dl_result"])
 
     if focus_game_id is None:
         render_forward_trace(console, forward)

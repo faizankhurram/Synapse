@@ -49,6 +49,13 @@ def _int_in_range(value: Any, label: str, lo: int, hi: int) -> int:
     return parsed
 
 
+def _ram_capacity(value: Any) -> int:
+    parsed = _int_in_range(value, "RAM capacity", 4, 128)
+    if parsed % 4 != 0:
+        raise ValueError("RAM capacity must be a multiple of 4 (4, 8, 12, ...).")
+    return parsed
+
+
 def _float_in_range(value: Any, label: str, lo: float, hi: float) -> float:
     try:
         parsed = float(str(value).strip())
@@ -84,7 +91,7 @@ def validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "cpu": _require_catalog_value(str(payload.get("cpu", "")), CPUS, "CPU"),
         "gpu": _require_catalog_value(str(payload.get("gpu", "")), GPUS, "GPU"),
         "motherboard": _require_catalog_value(str(payload.get("motherboard", "")), MOTHERBOARDS, "motherboard"),
-        "ram_capacity": _int_in_range(payload.get("ram_capacity"), "RAM capacity", 4, 128),
+        "ram_capacity": _ram_capacity(payload.get("ram_capacity")),
         "ram_gen": ram_gen,
         "drive_type": drive_type,
         "storage_free": _float_in_range(payload.get("storage_free"), "Storage free space", 0.0, 10000.0),

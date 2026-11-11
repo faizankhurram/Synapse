@@ -49,6 +49,10 @@ function validateForm() {
   const ram = parseNumber("ram-capacity", "RAM capacity", 4, 128, true);
   const storage = parseNumber("storage-free", "Storage free space", 0, 10000, false);
   const psu = parseNumber("psu-wattage", "PSU wattage", 200, 1600, true);
+  if (ram !== null && ram % 4 !== 0) {
+    $("ram-error").textContent = "RAM capacity must be a multiple of 4 (4, 8, 12, ...).";
+    return null;
+  }
   if (mode === "backward" && !selectedGame) {
     $("game-error").textContent = "Select a game from the suggestions.";
     return null;

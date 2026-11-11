@@ -13,7 +13,6 @@ from rich.tree import Tree
 
 from engine.forward_chainer import recommended_limiters
 from knowledge.catalog_db import GAMES
-from logic.formal_logic import DL_AXIOMS, FOL_FORMULAS
 
 PASS = "[bold green][PASS][/bold green]"
 FAIL = "[bold red][FAIL][/bold red]"
@@ -420,7 +419,8 @@ def render_diagnostics(console: Console, system_id: str, facts: set) -> None:
     console.print(Panel("\n".join(text), title="Stage 3 Diagnostics"))
 
 
-def render_semantic_net(console: Console, net, dl_result) -> None:
+def render_semantic_net(console: Console, net, dl_result=None) -> None:
+    section(console, "SEMANTIC NETWORK")
     root = Tree("[bold]Semantic Network[/bold]")
     by_source: dict[str, list] = {}
     for edge in net.edges:
@@ -430,19 +430,6 @@ def render_semantic_net(console: Console, net, dl_result) -> None:
         for edge in sorted(by_source[source], key=lambda e: (e.relation, e.target)):
             branch.add(f"{edge.relation} -> {edge.target}")
     console.print(root)
-
-    status = PASS if dl_result.consistent else FAIL
-    axiom_text = "\n".join(f"- {axiom}" for axiom in DL_AXIOMS)
-    violation_text = "No disjointness violations." if dl_result.consistent else "\n".join(dl_result.violations)
-    console.print(
-        Panel(
-            f"{status} DL Consistency\n\n[bold]ALCN Axioms[/bold]\n{axiom_text}\n\n"
-            f"[bold]Result[/bold]\n{violation_text}",
-            title="Description Logic",
-        )
-    )
-    fol_text = "\n".join(f"[bold]{item['name']}[/bold]\n{item['formula']}" for item in FOL_FORMULAS)
-    console.print(Panel(fol_text, title="First-Order Logic Formulas"))
 
 
 def render_proof(console: Console, proof) -> None:
