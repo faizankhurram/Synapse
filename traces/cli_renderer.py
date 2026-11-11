@@ -253,13 +253,19 @@ def render_proofs(console: Console, proofs, section_title: str = "4. BACKWARD CH
         console.print()
 
 
-def _system_diagnostic_lines(system_id: str, facts: set) -> tuple[list[str], list[str], list[str]]:
+def _system_diagnostic_lines(
+    system_id: str,
+    facts: set,
+    focus_game_id: str | None = None,
+) -> tuple[list[str], list[str], list[str]]:
     bottlenecks = sorted(args[1] for pred, args in facts if pred == "Bottleneck" and args[0] == system_id)
     balances = sorted(args[1] for pred, args in facts if pred == "SystemBalance" and args[0] == system_id)
     warnings = sorted(
         f"{args[1]} -> {args[2]}"
         for pred, args in facts
-        if pred == "Warning" and args[0] == system_id
+        if pred == "Warning"
+        and args[0] == system_id
+        and (focus_game_id is None or args[1] == focus_game_id)
     )
     return bottlenecks, balances, warnings
 
@@ -334,7 +340,7 @@ def render_focused_game_conclusion(
     section(console, "4. FINAL CONCLUSIONS")
     render_specs_summary(console, raw, system)
 
-    bottlenecks, balances, warnings = _system_diagnostic_lines(system_id, facts)
+    bottlenecks, balances, warnings = _system_diagnostic_lines(system_id, facts, focus_game_id=game_id)
     game_warnings = [
         args[2]
         for pred, args in facts
